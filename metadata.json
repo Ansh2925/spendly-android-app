@@ -1,0 +1,6 @@
+{
+  "name": "Spendly",
+  "description": "A modern, lightweight Expense Tracker to quickly record and manage your daily spending.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

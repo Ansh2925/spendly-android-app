@@ -1,0 +1,167 @@
+cat << 'INNER_EOF' > app/src/main/java/com/example/ui/screens/auth/LoginScreen.kt
+package com.example.ui.screens.auth
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
+import com.example.viewmodel.AuthState
+import com.example.viewmodel.AuthViewModel
+import kotlinx.coroutines.delay
+
+@Composable
+fun LoginScreen(
+    viewModel: AuthViewModel,
+    onNavigateToSignup: () -> Unit,
+    onNavigateToHome: () -> Unit,
+    onNavigateToForgotPassword: () -> Unit
+) {
+    val authState by viewModel.authState.collectAsState()
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Authenticated) {
+            onNavigateToHome()
+        }
+        if (authState is AuthState.Error) {
+            delay(5000)
+            viewModel.resetState()
+        }
+    }
+
+    Scaffold(containerColor = Color.White) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Welcome Back",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = Color(0xFF6B7280),
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFFF3F4F6),
+                        unfocusedContainerColor = Color(0xFFF3F4F6),
+                        focusedBorderColor = Color(0xFFA78BFA),
+                        unfocusedBorderColor = Color.Transparent
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Password") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFFF3F4F6),
+                        unfocusedContainerColor = Color(0xFFF3F4F6),
+                        focusedBorderColor = Color(0xFFA78BFA),
+                        unfocusedBorderColor = Color.Transparent
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(imageVector = image, contentDescription = "Toggle password visibility")
+                        }
+                    }
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onNavigateToForgotPassword) {
+                        Text("Forgot Password?", color = Color(0xFF8B5CF6))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = { viewModel.login(email, password) },
+                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    enabled = authState !is AuthState.Loading && email.isNotBlank() && password.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC4B5FD)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    if (authState is AuthState.Loading) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                    } else {
+                        Text("Login", color = Color.DarkGray)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+                HorizontalDivider(modifier = Modifier.fillMaxWidth(0.8f), color = Color(0xFFE5E7EB))
+                Spacer(modifier = Modifier.height(32.dp))
+
+                OutlinedButton(
+                    onClick = onNavigateToSignup,
+                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF8B5CF6)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFDDD6FE)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text("Create Account")
+                }
+            }
+
+            // Minimal Error Popup
+            AnimatedVisibility(
+                visible = authState is AuthState.Error,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 48.dp, start = 24.dp, end = 24.dp)
+            ) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFECDD3)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = (authState as? AuthState.Error)?.message ?: "",
+                        modifier = Modifier.padding(16.dp),
+                        color = Color(0xFF881337),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+    }
+}
+INNER_EOF
